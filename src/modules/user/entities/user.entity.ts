@@ -14,5 +14,8 @@ export class User {
 
     @Prop()
     expProgress:Number;
+
+    @Prop()
+    deckStr: string;
 }
 export const UserSchema = SchemaFactory.createForClass(User);

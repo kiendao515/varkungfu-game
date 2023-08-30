@@ -9,6 +9,7 @@ import { JwtService } from '@nestjs/jwt';
 import { HttpStatus } from '@nestjs/common/enums';
 import { HttpException } from '@nestjs/common/exceptions';
 import { RoleEnum } from '../roles/roles.enum';
+import { SaveDeckDto } from './dto/save-deck.dto';
 
 @Injectable()
 export class UserService {
@@ -23,7 +24,8 @@ export class UserService {
       s.username = createUserDto.username;
       s.password = hashPassword;
       s.currentLevel = 0;
-      s.expProgress = 0
+      s.expProgress = 0;
+      s.deckStr = null;
       return new this.user(s).save();
     } catch (error) {
       throw new Error(`Error create student ${error}`);
@@ -57,6 +59,17 @@ export class UserService {
       }
     } catch (err) {
       throw new Error(`${err.message}`);
+    }
+  }
+  async saveDeck(token: any, saveDeck: SaveDeckDto): Promise<any> {
+    const payload = this.jwtService.verify(token);
+    try {
+      let user = await this.user.findOneAndUpdate({ username: payload.username },{deckStr: JSON.stringify(saveDeck)},{new: true})
+      if(user){
+        return user
+      }else throw new HttpException({ message: "no username found with this token" }, HttpStatus.FORBIDDEN);
+    } catch (error) {
+      throw new HttpException({ message: error.message }, HttpStatus.FORBIDDEN);
     }
   }
 }
