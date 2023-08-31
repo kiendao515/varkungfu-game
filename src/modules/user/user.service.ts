@@ -10,11 +10,13 @@ import { HttpStatus } from '@nestjs/common/enums';
 import { HttpException } from '@nestjs/common/exceptions';
 import { RoleEnum } from '../roles/roles.enum';
 import { SaveDeckDto } from './dto/save-deck.dto';
+import { Deck, DeckDocument } from '../deck/entities/deck.entity';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectModel(User.name) private user: Model<UserDocument>,
+    @InjectModel(Deck.name) private deck: Model<DeckDocument>,
     private jwtService: JwtService
   ) { }
   async create(createUserDto: CreateUserDto): Promise<User> {
@@ -25,22 +27,38 @@ export class UserService {
       s.password = hashPassword;
       s.currentLevel = 0;
       s.expProgress = 0;
-      s.deckStr = null;
-      return new this.user(s).save();
+      let user = await new this.user(s).save();
+      this.initDeck(user._id)
+      return user;
     } catch (error) {
-      throw new Error(`Error create student ${error}`);
+      throw new HttpException({ message: error.message }, HttpStatus.BAD_REQUEST)
+    }
+  }
+  async initDeck(userId: any): Promise<any> {
+    for (var i = 1; i <= 3; i++) {
+      let d = new Deck();
+      d.order = i;
+      d.deckStr = null;
+      d.user = userId;
+      await new this.deck(d).save()
     }
   }
   async getAllUsers(): Promise<any> {
     return this.user.find({});
   }
   async getUserInfo(token: any): Promise<any> {
-    const payload = this.jwtService.verify(token);
-    if (payload.role == 3) {
-      let user = await this.user.findOne({ username: payload.username })
-      if (user) {
-        return user;
-      } else return null;
+    try {
+      const payload = this.jwtService.verify(token);
+      if (payload.role == 2) {
+        let user = await this.user.findOne({ username: payload.username })
+        if (user) {
+          return user;
+        }else{
+          throw new HttpException('user not found', HttpStatus.BAD_REQUEST);
+        }
+      }
+    } catch (error) {
+       throw new HttpException({ message: error.message }, HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -52,24 +70,13 @@ export class UserService {
         if (isMatch) {
           return user;
         } else {
-          throw new Error(`Password is incorrect`);
+          throw new HttpException('password is incorrect', HttpStatus.BAD_REQUEST);
         }
       } else {
-        throw new Error(`Username not found`);
+        throw new HttpException('username not found', HttpStatus.BAD_REQUEST);
       }
     } catch (err) {
-      throw new Error(`${err.message}`);
-    }
-  }
-  async saveDeck(token: any, saveDeck: SaveDeckDto): Promise<any> {
-    const payload = this.jwtService.verify(token);
-    try {
-      let user = await this.user.findOneAndUpdate({ username: payload.username },{deckStr: JSON.stringify(saveDeck)},{new: true})
-      if(user){
-        return user
-      }else throw new HttpException({ message: "no username found with this token" }, HttpStatus.FORBIDDEN);
-    } catch (error) {
-      throw new HttpException({ message: error.message }, HttpStatus.FORBIDDEN);
+      throw new HttpException({message: err.message},HttpStatus.BAD_REQUEST)
     }
   }
 }

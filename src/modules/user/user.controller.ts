@@ -41,18 +41,4 @@ export class UserController {
     findAll() {
         return this.userService.getAllUsers();
     }
-
-    @ApiBearerAuth()
-    @Post('/save-deck')
-    async getProfile(@Request() req,@Body() saveDeck: SaveDeckDto) {
-        const token = req.headers.authorization?.split(' ')[1];
-        if (!token) {
-            return {
-                error: 403,
-                message: 'token required'
-            }
-        } else {
-            return await this.userService.saveDeck(token,saveDeck);
-        }
-    }
 }
