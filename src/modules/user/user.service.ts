@@ -11,6 +11,7 @@ import { HttpException } from '@nestjs/common/exceptions';
 import { RoleEnum } from '../roles/roles.enum';
 import { SaveDeckDto } from './dto/save-deck.dto';
 import { Deck, DeckDocument } from '../deck/entities/deck.entity';
+import { SaveStatsDto } from './dto/save-stats.dto';
 
 @Injectable()
 export class UserService {
@@ -27,6 +28,7 @@ export class UserService {
       s.password = hashPassword;
       s.currentLevel = 0;
       s.expProgress = 0;
+      s.stats= null;
       let user = await new this.user(s).save();
       this.initDeck(user._id)
       return user;
@@ -77,6 +79,21 @@ export class UserService {
       }
     } catch (err) {
       throw new HttpException({message: err.message},HttpStatus.BAD_REQUEST)
+    }
+  }
+  async saveStats(token:any,@Body() saveStats: SaveStatsDto){
+    try {
+      const payload = this.jwtService.verify(token);
+      if (payload.role == 2) {
+        let user = await this.user.findOneAndUpdate({ username: payload.username },{stats: saveStats.statStr},{new:true})
+        if (user) {
+          return user;
+        }else{
+          throw new HttpException('user not found', HttpStatus.BAD_REQUEST);
+        }
+      }
+    } catch (error) {
+      throw new HttpException({message: error.message},HttpStatus.BAD_REQUEST)
     }
   }
 }

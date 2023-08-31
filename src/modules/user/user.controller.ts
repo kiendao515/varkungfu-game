@@ -7,7 +7,9 @@ import {
     Request,
     Delete,
     Param,
-    Patch
+    Patch,
+    HttpException,
+    HttpStatus
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 
@@ -17,6 +19,7 @@ import { RoleEnum } from '../roles/roles.enum';
 import { RolesGuard } from '../roles/roles.guard';
 import { CreateUserDto } from './dto/create-user.dto';
 import { SaveDeckDto } from './dto/save-deck.dto';
+import { SaveStatsDto } from './dto/save-stats.dto';
 import { User } from './entities/user.entity';
 import { UserService } from './user.service';
 
@@ -41,4 +44,16 @@ export class UserController {
     findAll() {
         return this.userService.getAllUsers();
     }
+
+    @ApiBearerAuth()
+    @Roles(RoleEnum.user)
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Post('save-stats')
+    saveStats(@Request() req,@Body() saveStat: SaveStatsDto){
+        const token = req.headers.authorization?.split(' ')[1];
+        if(!token){
+            throw new HttpException({ message: 'Access Forbidden' }, HttpStatus.FORBIDDEN);
+        }else return this.userService.saveStats(token, saveStat);
+    }
+
 }

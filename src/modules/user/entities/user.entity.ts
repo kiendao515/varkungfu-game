@@ -15,5 +15,8 @@ export class User {
     @Prop()
     expProgress:Number;
 
+    @Prop()
+    stats:string;
+
 }
 export const UserSchema = SchemaFactory.createForClass(User);
