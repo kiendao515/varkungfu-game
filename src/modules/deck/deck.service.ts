@@ -21,7 +21,7 @@ export class DeckService {
             let user = await this.user.findOne({username: payload.username})
             if(user){
                 if(1 <= createDeckDto.order && createDeckDto.order <=3){
-                    const d = await this.deck.findOneAndUpdate({user: user._id,order:createDeckDto.order},{deckStr: JSON.stringify(createDeckDto.deckStr),
+                    const d = await this.deck.findOneAndUpdate({user: user._id,order:createDeckDto.order},{deckStr: createDeckDto.deckStr,
                     order: createDeckDto.order},{new:true})
                     return d;
                 }else 
