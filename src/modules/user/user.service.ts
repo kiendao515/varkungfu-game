@@ -96,4 +96,17 @@ export class UserService {
       throw new HttpException({message: error.message},HttpStatus.BAD_REQUEST)
     }
   }
+  async deteleStats(token:any){
+    try {
+      const payload = this.jwtService.verify(token)
+      if(payload.role == 2){
+        let user = await this.user.findOneAndUpdate({username: payload.username},{stats : ""},{new: true})
+        if(user){
+          return user;
+        }else throw new HttpException('user not found', HttpStatus.BAD_REQUEST);
+      }
+    } catch (error) {
+      throw new HttpException({message: error.message},HttpStatus.BAD_REQUEST)
+    }
+  }
 }

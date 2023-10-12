@@ -56,4 +56,15 @@ export class UserController {
         }else return this.userService.saveStats(token, saveStat);
     }
 
+    @ApiBearerAuth()
+    @Roles(RoleEnum.user)
+    @UseGuards(AuthGuard('jwt'),RolesGuard)
+    @Post('delete-stats')
+    deleteStats(@Request() req){
+        const token = req.headers.authorization?.split(' ')[1];
+        if(!token){
+            throw new HttpException({ message: 'Access Forbidden' }, HttpStatus.FORBIDDEN);
+        }else return this.userService.deteleStats(token);
+    }
+
 }
